@@ -1,0 +1,127 @@
+---
+title: "Nationwide_exercise_AP"
+author: "Annie_Phan"
+date: "9/28/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+Loading data to R
+
+```{r}
+par(mfrow=c(1,1))
+RatesData<-read.csv(file=paste("Traindata_NW.csv",sep="/"),
+           row.names=1,header=TRUE,sep=",")
+#head(RatesData)
+```
+
+```{r}
+# prediction y
+Maturities<-RatesData[,80]
+```
+
+```{r}
+# Visualization for predictor variables
+RatesData_x<-data.matrix(RatesData[,1:78],rownames.force="automatic")
+RatesData_x.ranks.matrix<-apply(RatesData_x,2,rank)
+matplot(1:length(RatesData_x[,1]),RatesData_x,
+        type="l",lty=1,
+        xlab="",ylab="Rates")
+```
+
+```{r}
+Covariance.Matrix<-cov(RatesData_x)
+#Covariance.Matrix
+```
+
+
+```{r}
+#cor(RatesData_x)
+```
+
+## 1. PCA assumptions:
+The method is based on approximation of the covariance matrix. Thus, it has Gaussian assumption about the data.
+
+Check if this assumption is correct.
+
+```{r}
+hist(RatesData_x[,3])
+```
+
+```{r}
+qqnorm(RatesData_x[,3])
+qqline(RatesData_x[,3])
+```
+
+The predictors in this dataset is Gaussian distribution.
+
+## 2. Apply PCA
+
+```{r}
+PCA.RatesData<-princomp(RatesData_x)
+names(PCA.RatesData)
+```
+
+```{r}
+#summary(PCA.RatesData)
+```
+
+```{r}
+plot(PCA.RatesData)
+```
+
+The plot clearly indicates that 5 components should be enough.
+Make the loadings and factors.
+
+```{r}
+Loadings.5.factors<-PCA.RatesData$loadings[,1:5]
+Factors.5.factors<-PCA.RatesData$scores[,1:5]
+```
+
+Create matrix of 5-factor PCA approximations.
+Check approximation for one of the variables.
+
+```{r}
+Model.Matrix.5.factors<-t(apply(Factors.5.factors%*%t(Loadings.5.factors),1,"+",PCA.RatesData$center))
+matplot(1:length(RatesData_x[,1]),cbind(RatesData_x[,6],Model.Matrix.5.factors[,6]),
+        type="l",lty=1,col=c("black","red"),
+        xlab=NULL,ylab=NULL)
+
+```
+
+Compare the covariance matrix of 78 variables with the model covariance matrix.
+
+```{r}
+#cov(Model.Matrix.5.factors)
+```
+
+```{r}
+#Covariance.Matrix
+```
+
+Approximation is close.
+
+Explore factors.
+
+```{r}
+matplot(1:length(Factors.5.factors[,1]),Factors.5.factors,
+        type="l",lty=1,xlab=NULL,ylab="Factors",col=c("black","red"),
+        main="First 5 factors",lwd=3)
+```
+
+```{r}
+plot(Factors.5.factors,
+     type="l",lty=1,xlab="Factor 1",ylab="Factor 2",
+        main="First 2 factors",col=c("black","red"),lwd=3)
+```
+
+```{r}
+cor(Factors.5.factors)
+```
+
+We see again long periods of persistent non-linear dependence.
